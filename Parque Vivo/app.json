@@ -1,27 +1,27 @@
+
 {
   "expo": {
-    "name": "Parquevila",
-    "slug": "Parquevila",
+    "name": "Parque Vivo",
+    "slug": "parquevila",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#EAF4E9",
+    "icon": "./assets/parque-logomarca.png",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "backgroundColor": "#EAF4E9"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "foregroundImage": "./assets/parque-logomarca.png",
+        "backgroundColor": "#EAF4E9"
+      },
+      "backgroundColor": "#EAF4E9"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-font"
-    ]
+      "favicon": "./assets/parque-logomarca.png",
+      "bundler": "metro"
+    }
   }
 }
