@@ -7,20 +7,14 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#EAF4E9",
-    "icon": "./assets/parque-logomarca.png",
     "ios": {
       "supportsTablet": true,
       "backgroundColor": "#EAF4E9"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/parque-logomarca.png",
-        "backgroundColor": "#EAF4E9"
-      },
       "backgroundColor": "#EAF4E9"
     },
     "web": {
-      "favicon": "./assets/parque-logomarca.png",
       "bundler": "metro"
     }
   }

@@ -1,9 +1,5 @@
-// Importações necessárias:
-import React, { useState } from 'react';
-import { StatusBar, View } from 'react-native'; 
+// Tela de splash do aplicativo:
 import React from 'react';
-
-// Importa os componentes:
 import {
   View,
   Text,
@@ -24,10 +20,11 @@ import {
 
 // Importa o gradiente linear:
 import { LinearGradient } from 'expo-linear-gradient';
+
 // Importa a máscara para o gradiente:
 import MaskedView from '@react-native-masked-view/masked-view';
 
-// Tela de splash do aplicativo:
+// Tela splash do aplicativo:
 export default function SplashScreen({ onEntrar }) {
   // Dimensões da tela:
   const { width, height } = useWindowDimensions();
@@ -52,7 +49,7 @@ export default function SplashScreen({ onEntrar }) {
     Poppins_900Black,
   });
 
-  // Se as fontes não estiverem carregadas, retorna uma tela vazia:
+  // Aguarda o carregamento das fontes:
   if (!fontesCarregadas) {
     return <View style={styles.container} />;
   }
@@ -60,6 +57,7 @@ export default function SplashScreen({ onEntrar }) {
   // Renderiza a tela de splash:
   return (
     <ScrollView
+    // Ajusta o estilo do ScrollView de acordo com a tela:
       contentContainerStyle={[
         styles.container,
         {
@@ -68,19 +66,16 @@ export default function SplashScreen({ onEntrar }) {
           paddingVertical: telaBaixa ? 16 : telaGrande ? 32 : 26,
         },
       ]}
-      // Oculta o indicador de rolagem vertical:
+      // Desativa a barra de rolagem vertical:
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.conteudo}>
-
         {/* Título do parque com degradê */}
         <MaskedView
-        // Define o tamanho do título e da máscara:
           style={{
             width: telaGrande ? 330 : 300,
             height: tamanhoTitulo + 12,
           }}
-          // Máscara para o gradiente:
           maskElement={
             <Text style={[styles.titulo, { fontSize: tamanhoTitulo }]}>
               Parque Vivo
@@ -132,7 +127,7 @@ export default function SplashScreen({ onEntrar }) {
             },
           ]}
         >
-          Explore o parque e planeje seu próximo passeio.
+          Conheça o parque e planeje seu passeio.
         </Text>
 
         {/* Botão "Começar" */}
@@ -155,7 +150,6 @@ export default function SplashScreen({ onEntrar }) {
             <Text style={styles.textoBotao}>Começar</Text>
           </LinearGradient>
         </TouchableOpacity>
-
       </View>
     </ScrollView>
   );
@@ -169,8 +163,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
-  // Conteúdo da tela:
+
+  // Conteúdos da tela:
   conteudo: {
     width: '100%',
     maxWidth: 430,
@@ -190,14 +184,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Subtítulo da tela de splash:
+  // Subtítulo da tela:
   subtitulo: {
     color: '#527D68',
     fontFamily: 'Poppins_700Bold',
     textAlign: 'center',
   },
 
-  // Descrição da tela de splash:
+  // Descrição da tela:
   descricao: {
     color: '#52685C',
     fontFamily: 'Poppins_300Light',
@@ -205,7 +199,7 @@ const styles = StyleSheet.create({
     maxWidth: 330,
   },
 
-  // Área do botão "Começar":
+  // Área do botão:
   botaoArea: {
     width: '100%',
     maxWidth: 280,
@@ -222,7 +216,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Texto do botão "Começar":
+  // Texto do botão:
   textoBotao: {
     color: '#FFFFFF',
     fontFamily: 'Poppins_700Bold',
