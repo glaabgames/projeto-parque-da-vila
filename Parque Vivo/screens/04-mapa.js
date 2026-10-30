@@ -1,7 +1,6 @@
-// Tela do mapa do parque:
-import React from 'react';
 
-// Importa os componentes do React Native:
+import React, { useState } from 'react';
+
 import {
   View,
   Text,
@@ -16,7 +15,7 @@ import {
   Alert,
 } from 'react-native';
 
-// Importa as fontes Poppins:
+// Fontes utilizadas no aplicativo.
 import {
   useFonts,
   Poppins_300Light,
@@ -24,81 +23,104 @@ import {
   Poppins_900Black,
 } from '@expo-google-fonts/poppins';
 
-// Importa o gradiente:
+// Gradientes e título colorido.
 import { LinearGradient } from 'expo-linear-gradient';
-
-// Importa a máscara para o título:
 import MaskedView from '@react-native-masked-view/masked-view';
 
-// Tela do mapa:
-export default function MapaScreen({ onPerfil }) {
+// Tela do mapa do parque.
+export default function MapaScreen({ onPerfil, onVoltar }) {
   const { width } = useWindowDimensions();
 
-  // Ajusta os tamanhos conforme a tela:
+  // Guarda os nomes dos locais favoritos.
+  const [favoritos, setFavoritos] = useState([]);
+
+  // Ajusta os tamanhos conforme a largura da tela.
   const telaGrande = width >= 768;
   const celularEstreito = width < 360;
 
   const tamanhoTitulo = telaGrande ? 29 : celularEstreito ? 22 : 25;
   const tamanhoBoasVindas = telaGrande ? 19 : celularEstreito ? 12 : 14;
-  const tamanhoImagemParque = telaGrande ? 300 : Math.min(width * 0.58, 260);
 
-  // Carrega as fontes:
+  // Carrega as fontes.
   const [fontesCarregadas] = useFonts({
     Poppins_300Light,
     Poppins_700Bold,
     Poppins_900Black,
   });
-  // Aguarda o carregamento das fontes:
+
+  // Mostra uma tela vazia enquanto as fontes carregam.
   if (!fontesCarregadas) {
     return <View style={styles.fundo} />;
   }
 
-  // Locais de exemplo do parque:
+  // Informações e imagens dos locais do parque.
   const pontosDoParque = [
     {
-      titulo: 'Área 1.',
-      descricao: 'Lazer: Setor central.',
+      subtitulo: 'Visite o bosque!',
+      descricao:
+        'Área de lazer ideal para passeios, caminhadas e contato com a natureza.',
+      imagem: require('../assets/parque-bosque.png'),
     },
     {
-      titulo: 'Área 2.',
-      descricao: 'Lazer: Setor central.',
+      subtitulo: 'Visite o lago!',
+      descricao:
+        'Área de lazer para passeios, contemplação da paisagem e momentos de descanso.',
+      imagem: require('../assets/parque-lago.png'),
     },
     {
-      titulo: 'Área 3.',
-      descricao: 'Esportes: Setor central.',
+      subtitulo: 'Visite o parquinho!',
+      descricao:
+        'Área de lazer com brinquedos infantis, ideal para as crianças brincarem e se divertirem.',
+      imagem: require('../assets/parque-playground.png'),
     },
     {
-      titulo: 'Área 4.',
-      descricao: 'Esportes: Setor central.',
+      subtitulo: 'Visite as quadras!',
+      descricao:
+        'Área esportiva destinada à prática de esportes, exercícios físicos e atividades recreativas.',
+      imagem: require('../assets/parque-quadra-futebol.png'),
+    },
+    {
+      subtitulo: 'Visite os quiosques!',
+      descricao:
+        'Área de lazer para almoços, jantares, refeições ao ar livre e momentos de convivência.',
+      imagem: require('../assets/parque-quiosque.png'),
     },
   ];
 
-  // Mostra um aviso ao favoritar:
-  function favoritarLocal() {
-    if (Platform.OS === 'web') {
-      window.alert('Você favoritou esse local!');
+  // Adiciona ou remove um local dos favoritos.
+  function favoritarLocal(nomeLocal) {
+    if (favoritos.includes(nomeLocal)) {
+      // Remove o local da lista.
+      setFavoritos(favoritos.filter((item) => item !== nomeLocal));
+
+      // Mostra a mensagem de remoção.
+      if (Platform.OS === 'web') {
+        window.alert('Você tirou esse local dos favoritos.');
+      } else {
+        Alert.alert('Atenção', 'Você tirou esse local dos favoritos.');
+      }
     } else {
-      Alert.alert(
-        'Atenção:',
-        'Você favoritou esse local!'
-      );
+      // Adiciona o local à lista.
+      setFavoritos([...favoritos, nomeLocal]);
+
+      // Mostra a mensagem de confirmação.
+      if (Platform.OS === 'web') {
+        window.alert('Você favoritou esse local.');
+      } else {
+        Alert.alert('Atenção', 'Você favoritou esse local.');
+      }
     }
   }
-  // Renderiza a tela do mapa:
-  return (
-    // SafeAreaView para evitar sobreposição com a barra de status:
-    <SafeAreaView style={styles.fundo}>
 
-      {/* Espaço da barra de status do Android: */}
+  // Monta a tela.
+  return (
+    <SafeAreaView style={styles.fundo}>
+      {/* Espaço da barra superior do celular Android. */}
       {Platform.OS === 'android' && (
-        <View
-          style={{
-            height: StatusBar.currentHeight || 24,
-          }}
-        />
+        <View style={{ height: StatusBar.currentHeight || 24 }} />
       )}
 
-      {/* Barra superior: mantém o padrão da Home: */}
+      {/* Cabeçalho alinhado às telas de reservas e agendamento. */}
       <LinearGradient
         colors={['#326B54', '#8AB59D']}
         start={{ x: 0, y: 0 }}
@@ -111,7 +133,18 @@ export default function MapaScreen({ onPerfil }) {
           },
         ]}
       >
-        <View style={styles.grupoBoasVindas}>
+        {/* Grupo com botão voltar e mensagem de boas-vindas. */}
+        <View style={styles.grupoEsquerdoTopo}>
+          <TouchableOpacity
+            onPress={onVoltar}
+            activeOpacity={0.7}
+            style={styles.botaoVoltar}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar para a tela anterior"
+          >
+            <Text style={styles.flechaVoltar}>‹</Text>
+          </TouchableOpacity>
+
           <Text
             style={[
               styles.boasVindas,
@@ -125,6 +158,7 @@ export default function MapaScreen({ onPerfil }) {
           </Text>
         </View>
 
+        {/* Botão que abre o perfil. */}
         <TouchableOpacity
           onPress={onPerfil}
           activeOpacity={0.7}
@@ -140,37 +174,31 @@ export default function MapaScreen({ onPerfil }) {
         </TouchableOpacity>
       </LinearGradient>
 
-      {/* Conteúdo da página com rolagem: */}
+      {/* Área que permite rolar a página. */}
       <ScrollView
         style={styles.areaRolagem}
         contentContainerStyle={[
           styles.container,
-          {
-            paddingHorizontal: telaGrande ? 28 : 16,
-          },
+          { paddingHorizontal: telaGrande ? 28 : 16 },
         ]}
-        showsVerticalScrollIndicator={true}
-        bounces={true}
+        showsVerticalScrollIndicator
+        bounces
         overScrollMode="auto"
         keyboardShouldPersistTaps="handled"
       >
         <View
           style={[
             styles.conteudo,
-            {
-              maxWidth: telaGrande ? 760 : 480,
-            },
+            { maxWidth: telaGrande ? 760 : 480 },
           ]}
         >
-
-          {/* Cartão principal com imagem e textos: */}
+          {/* Cartão com o título e o mapa completo. */}
           <View style={styles.cartaoPrincipal}>
-
             <Text style={styles.subtituloPagina}>
               Guia do parque.
             </Text>
 
-            {/* Título com gradiente: */}
+            {/* Título com gradiente verde. */}
             <MaskedView
               style={[
                 styles.areaTitulo,
@@ -202,80 +230,91 @@ export default function MapaScreen({ onPerfil }) {
               Conheça cada cantinho do parque.
             </Text>
 
-            <Image
-              source={require('../assets/parque-imagem-completa.png')}
-              style={[
-                styles.imagemParque,
-                { height: tamanhoImagemParque },
-              ]}
-              resizeMode="cover"
-              accessibilityLabel="Imagem ilustrativa do parque"
-            />
+            {/* Imagem completa do parque. */}
+            <View style={styles.molduraMapa}>
+              <Image
+                source={require('../assets/parque-imagem-completa.png')}
+                style={styles.imagemParque}
+                resizeMode="stretch"
+                accessibilityLabel="Mapa completo do Parque Vivo"
+              />
+            </View>
           </View>
 
-          {/* Título da lista de locais: */}
+          {/* Título da lista de locais. */}
           <Text style={styles.tituloPontos}>
             Pontos do parque:
           </Text>
 
-          {/* Cartões dos quatro locais: */}
-          {pontosDoParque.map((ponto, index) => (
-            <View
-              key={index}
-              style={styles.cartaoPonto}
-            >
-              <Image
-                source={require('../assets/parque-quadra-futebol.png')}
-                style={styles.imagemPonto}
-                resizeMode="cover"
-                accessibilityLabel={`Imagem ilustrativa da ${ponto.titulo}`}
-              />
+          {/* Cria um cartão para cada local. */}
+          {pontosDoParque.map((ponto) => {
+            // Verifica se o local já está nos favoritos.
+            const estaFavoritado = favoritos.includes(ponto.subtitulo);
 
-              <Text style={styles.tituloPonto}>
-                {ponto.titulo}
-              </Text>
-
-              <Text style={styles.descricaoPonto}>
-                {ponto.descricao}
-              </Text>
-
-              {/* Botão Favoritar: */}
-              <TouchableOpacity
-                onPress={favoritarLocal}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                style={styles.areaBotaoFavoritar}
+            return (
+              <View
+                key={ponto.subtitulo}
+                style={styles.cartaoPonto}
               >
-                <LinearGradient
-                  colors={['#326B54', '#8AB59D']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.botaoFavoritar}
-                >
-                  <Text style={styles.textoBotao}>
-                    Favoritar
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          ))}
+                {/* Imagem do local. */}
+                <Image
+                  source={ponto.imagem}
+                  style={styles.imagemPonto}
+                  resizeMode="cover"
+                  accessibilityLabel={ponto.subtitulo}
+                />
 
+                {/* Nome de cada local. */}
+                <Text style={styles.subtituloPonto}>
+                  {ponto.subtitulo}
+                </Text>
+
+                {/* Descrição de cada local. */}
+                <Text style={styles.descricaoPonto}>
+                  {ponto.descricao}
+                </Text>
+
+                {/* Botão para favoritar ou desfavoritar. */}
+                <TouchableOpacity
+                  onPress={() => favoritarLocal(ponto.subtitulo)}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    estaFavoritado
+                      ? `Desfavoritar ${ponto.subtitulo}`
+                      : `Favoritar ${ponto.subtitulo}`
+                  }
+                  style={styles.areaBotaoFavoritar}
+                >
+                  <LinearGradient
+                    colors={['#326B54', '#8AB59D']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.botaoFavoritar}
+                  >
+                    <Text style={styles.textoBotao}>
+                      {estaFavoritado ? 'Desfavoritar' : 'Favoritar'}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// Estilos da tela:
+// Estilos visuais da tela.
 const styles = StyleSheet.create({
-
-  // Fundo branco:
+  // Fundo branco.
   fundo: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
 
-  // Barra superior:
+  // Cabeçalho verde.
   barraTopo: {
     width: '100%',
     paddingVertical: 12,
@@ -284,23 +323,45 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  // Grupo de boas-vindas:
-  grupoBoasVindas: {
+  // Grupo com a seta e o texto de boas-vindas.
+  grupoEsquerdoTopo: {
     flex: 1,
     minWidth: 0,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     marginRight: 12,
   },
 
-  // Texto de boas-vindas:
+  // Botão de voltar.
+  botaoVoltar: {
+    width: 32,
+    height: 44,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+
+  // Seta de voltar.
+  flechaVoltar: {
+    color: '#FFFFFF',
+    fontSize: 38,
+    lineHeight: 42,
+    fontFamily: 'Poppins_300Light',
+    includeFontPadding: false,
+    textAlign: 'center',
+  },
+
+  // Texto do cabeçalho.
   boasVindas: {
-    width: '100%',
+    flex: 1,
+    minWidth: 0,
     color: '#FFFFFF',
     fontFamily: 'Poppins_700Bold',
     includeFontPadding: false,
   },
 
-  // Botão do perfil:
+  // Botão do perfil.
   botaoPerfil: {
     width: 44,
     height: 44,
@@ -309,56 +370,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Imagem do perfil:
+  // Imagem do perfil.
   imagemPerfil: {
     width: '100%',
     height: '100%',
   },
 
-  // Área de rolagem:
+  // Área de rolagem.
   areaRolagem: {
     flex: 1,
     width: '100%',
   },
 
-  // Conteúdo da página:
+  // Organização do conteúdo.
   container: {
     flexGrow: 1,
     alignItems: 'center',
-    paddingTop: 20,
-    paddingBottom: 48,
+    paddingTop: 12,
+    paddingBottom: 24,
   },
 
-  // Conteúdo interno da página:
+  // Limita a largura do conteúdo.
   conteudo: {
     width: '100%',
     alignSelf: 'center',
   },
 
-  // Cartão principal:
+  // Cartão principal do mapa.
   cartaoPrincipal: {
     width: '100%',
     backgroundColor: '#F3F6F2',
     borderRadius: 18,
-    padding: 16,
+    padding: 12,
     marginBottom: 24,
   },
 
-  // Subtítulo da página:
+  // Texto "Guia do parque".
   subtituloPagina: {
     color: '#527D68',
     fontFamily: 'Poppins_700Bold',
     fontSize: 13,
-    marginBottom: 4,
+    marginBottom: 3,
   },
 
-  // Título da página:
+  // Área do título.
   areaTitulo: {
     width: '100%',
     justifyContent: 'center',
   },
 
-  // Título da página:
+  // Formato do texto do título.
   titulo: {
     color: '#000000',
     fontFamily: 'Poppins_900Black',
@@ -366,67 +427,79 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
 
-  // Gradiente do título:
+  // Preenchimento em gradiente do título.
   gradienteTitulo: {
     flex: 1,
   },
 
-  // Descrição da página:
+  // Descrição abaixo do título.
   descricaoPagina: {
     color: '#52685C',
     fontFamily: 'Poppins_300Light',
     fontSize: 14,
     lineHeight: 22,
-    marginTop: 5,
-    marginBottom: 16,
+    marginTop: 3,
+    marginBottom: 8,
   },
 
-  // Imagem do parque:
-  imagemParque: {
+  // Moldura da imagem do mapa.
+  molduraMapa: {
     width: '100%',
     borderRadius: 13,
-    backgroundColor: '#EEF3EF',
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    marginTop: 0,
+    marginBottom: 0,
   },
 
-  // Título dos pontos:
+  // Tamanho e proporção do mapa.
+  imagemParque: {
+    width: '100%',
+    height: undefined,
+    aspectRatio: 1122 / 1402,
+  },
+
+  // Título "Pontos do parque".
   tituloPontos: {
     width: '100%',
     color: '#326B54',
     fontFamily: 'Poppins_700Bold',
     fontSize: 18,
-    marginBottom: 12,
+    marginTop: 2,
+    marginBottom: 16,
   },
 
-  // Cartão de cada local:
+  // Cartão de cada local.
   cartaoPonto: {
     width: '100%',
     alignItems: 'center',
     backgroundColor: '#F3F6F2',
     borderRadius: 14,
     padding: 14,
-    marginBottom: 12,
+    marginBottom: 14,
   },
 
-  // Imagem de cada local:
+  // Imagem de cada local.
   imagemPonto: {
     width: '100%',
     height: 150,
     borderRadius: 10,
     backgroundColor: '#EEF3EF',
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
-  // Título de cada local:
-  tituloPonto: {
+  // Nome de cada local.
+  subtituloPonto: {
     width: '100%',
-    color: '#326B54',
+    color: '#527D68',
     fontFamily: 'Poppins_700Bold',
-    fontSize: 15,
+    fontSize: 13,
     textAlign: 'left',
-    marginBottom: 4,
+    marginTop: 0,
+    marginBottom: 6,
   },
 
-  // Descrição de cada local:
+  // Descrição de cada local.
   descricaoPonto: {
     width: '100%',
     color: '#52685C',
@@ -437,14 +510,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // Área do botão:
+  // Área do botão.
   areaBotaoFavoritar: {
     width: '100%',
     borderRadius: 10,
     overflow: 'hidden',
   },
 
-  // Botão com gradiente:
+  // Formato do botão com gradiente.
   botaoFavoritar: {
     minHeight: 42,
     alignItems: 'center',
@@ -453,7 +526,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
 
-  // Texto do botão:
+  // Texto do botão.
   textoBotao: {
     color: '#FFFFFF',
     fontFamily: 'Poppins_700Bold',
