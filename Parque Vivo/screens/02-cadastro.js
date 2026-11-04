@@ -1,5 +1,7 @@
-// Tela de cadastro do aplicativo:
+// Importa o React e as ferramentas para guardar informações na tela.
 import React, { useState } from 'react';
+
+// Importa os componentes do React Native:
 import {
   View,
   Text,
@@ -12,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 
-// Importa as fontes do Google Fonts:
+// Importa as fontes do google fonts:
 import {
   useFonts,
   Poppins_300Light,
@@ -26,6 +28,7 @@ import MaskedView from '@react-native-masked-view/masked-view';
 
 // Tela de cadastro:
 export default function CadastroScreen({ onCadastrar, onIrLogin }) {
+  // Estados para armazenar os valores dos campos de cadastro:
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -37,6 +40,7 @@ export default function CadastroScreen({ onCadastrar, onIrLogin }) {
 
   // Carrega as fontes:
   const [fontesCarregadas] = useFonts({
+    // Fonte "Poppins" com diferentes pesos:
     Poppins_300Light,
     Poppins_700Bold,
     Poppins_900Black,
@@ -44,6 +48,7 @@ export default function CadastroScreen({ onCadastrar, onIrLogin }) {
 
   // Exibe alertas na web e no celular:
   function mostrarAlerta(mensagem) {
+    // Se a plataforma for web, usa alert(), caso contrário, usa Alert.alert() do React Native.
     if (Platform.OS === 'web') {
       alert(mensagem);
     } else {
@@ -58,17 +63,17 @@ export default function CadastroScreen({ onCadastrar, onIrLogin }) {
       mostrarAlerta('Informe seu nome completo.');
       return;
     }
-    // Valida o e-mail com regex para aceitar apenas e-mails do Gmail:
+    // Valida o e-mail com regex para aceitar apenas e-mails do gmail.
     if (!/^[^\s@]+@gmail\.com$/i.test(email.trim())) {
       mostrarAlerta('Digite um e-mail válido com final @gmail.com.');
       return;
     }
-    // Valida a senha para ter entre 6 e 20 caracteres:
+    // Valida a senha para ter entre 6 e 20 caracteres.
     if (senha.length < 6 || senha.length > 20) {
       mostrarAlerta('A senha deve conter entre 6 e 20 caracteres.');
       return;
     }
-    // Valida se a senha e a confirmação de senha são iguais:
+    // Valida se a senha e a confirmação de senha são iguais.
     if (senha !== confirmarSenha) {
       mostrarAlerta('As senhas não coincidem. Verifique e tente novamente.');
       return;
@@ -109,6 +114,7 @@ export default function CadastroScreen({ onCadastrar, onIrLogin }) {
             width: telaGrande ? 350 : 320,
             height: 50,
           }}
+          // Elemento máscara para o gradiente:
           maskElement={
             <Text style={styles.titulo}>Cadastro de usuário</Text>
           }
@@ -180,8 +186,9 @@ export default function CadastroScreen({ onCadastrar, onIrLogin }) {
           />
         </View>
 
-        {/* Botão Cadastrar: */}
+        {/* Botão "Cadastrar": */}
         <TouchableOpacity
+        // Chama a função fazerCadastro quando o botão é pressionado.
           onPress={fazerCadastro}
           activeOpacity={0.8}
           style={styles.botaoArea}
@@ -201,7 +208,7 @@ export default function CadastroScreen({ onCadastrar, onIrLogin }) {
           <Text style={styles.textoLogin}>
             Já tem uma conta?
           </Text>
-
+          
           <TouchableOpacity
             onPress={onIrLogin}
             activeOpacity={0.7}
@@ -217,6 +224,7 @@ export default function CadastroScreen({ onCadastrar, onIrLogin }) {
 // Estilos da tela:
 const styles = StyleSheet.create({
   container: {
+    // Ajusta o container principal da tela, permitindo crescimento flexível, definindo a cor de fundo e centralizando os elementos.
     flexGrow: 1,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
@@ -225,12 +233,14 @@ const styles = StyleSheet.create({
 
   // Conteúdos da tela:
   conteudo: {
+    // Ajusta a largura máxima do conteúdo e centraliza os itens.
     width: '100%',
     alignSelf: 'center',
   },
 
   // Título:
   titulo: {
+    // Ajusta a cor, fonte e alinhamento do título.
     fontFamily: 'Poppins_900Black',
     fontSize: 29,
     color: '#000000',
@@ -245,6 +255,7 @@ const styles = StyleSheet.create({
 
   // Subtítulo:
   subtitulo: {
+    // Ajusta a cor, fonte, tamanho e alinhamento do subtítulo.
     color: '#527D68',
     fontFamily: 'Poppins_300Light',
     fontSize: 15,
@@ -255,6 +266,7 @@ const styles = StyleSheet.create({
 
   // Caixa dos campos:
   blocoCampos: {
+    // Ajusta o estilo do bloco que contém os campos de cadastro, incluindo cor de fundo, preenchimento, borda arredondada e margem inferior.
     backgroundColor: '#EEF3EF',
     padding: 20,
     borderRadius: 16,
@@ -263,6 +275,7 @@ const styles = StyleSheet.create({
 
   // Rótulo dos campos:
   rotulo: {
+    // Ajusta a cor, fonte, tamanho e margem inferior do rótulo dos campos.
     color: '#326B54',
     fontFamily: 'Poppins_700Bold',
     fontSize: 14,
@@ -271,6 +284,7 @@ const styles = StyleSheet.create({
 
   // Campos de entrada:
   campo: {
+    // Ajusta a altura, cor de fundo, borda, padding, cor do texto, fonte e tamanho do campo de entrada.
     height: 50,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -290,6 +304,7 @@ const styles = StyleSheet.create({
 
   // Área do botão:
   botaoArea: {
+    // Ajusta a largura do botão, arredonda os cantos e oculta o conteúdo que ultrapassa os limites.
     width: '100%',
     borderRadius: 14,
     overflow: 'hidden',
@@ -297,6 +312,7 @@ const styles = StyleSheet.create({
 
   // Botão Cadastrar:
   botao: {
+    // Ajusta a altura mínima, o preenchimento e centraliza o conteúdo do botão.
     minHeight: 52,
     paddingVertical: 14,
     alignItems: 'center',
@@ -305,6 +321,7 @@ const styles = StyleSheet.create({
 
   // Texto do botão "Cadastrar":
   textoBotao: {
+    // Ajusta a cor, fonte, tamanho e alinhamento do texto do botão "Cadastrar".
     color: '#FFFFFF',
     fontFamily: 'Poppins_700Bold',
     fontSize: 17,
@@ -312,6 +329,7 @@ const styles = StyleSheet.create({
 
   // Área do link para a tela de login:
   areaLogin: {
+    // Ajusta a área do link para login, organizando os elementos em linha, permitindo quebra de linha e centralizando os itens.
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
@@ -320,6 +338,7 @@ const styles = StyleSheet.create({
 
   // Texto do link para a tela de login:
   textoLogin: {
+    // Ajusta o estilo do texto do link para login, incluindo cor, fonte e tamanho.
     color: '#52685C',
     fontFamily: 'Poppins_300Light',
     fontSize: 13,
@@ -327,6 +346,7 @@ const styles = StyleSheet.create({
 
   // Link para a tela de login:
   linkLogin: {
+    // Ajusta o estilo do link para login, incluindo cor, fonte, tamanho e margem esquerda.
     color: '#326B54',
     fontFamily: 'Poppins_700Bold',
     fontSize: 13,

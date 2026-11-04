@@ -1,4 +1,4 @@
-// Tela de login do aplicativo:
+// Importa o React e as ferramentas para guardar informações na tela.
 import React, { useState } from 'react';
 
 // Importa os componentes do React Native:
@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 
-// Importa as fontes do Google Fonts:
+// Importa as fontes do google fonts:
 import {
   useFonts,
   Poppins_300Light,
@@ -37,6 +37,7 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
 
   // Carrega as fontes:
   const [fontesCarregadas] = useFonts({
+    // Fonte "Poppins" com diferentes pesos:
     Poppins_300Light,
     Poppins_700Bold,
     Poppins_900Black,
@@ -44,6 +45,7 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
 
   // Mostra o alerta padrão:
   function mostrarAlerta(mensagem) {
+    // Se a plataforma for web, usa alert(), caso contrário, usa Alert.alert() do React Native.
     if (Platform.OS === 'web') {
       alert(mensagem);
     } else {
@@ -53,6 +55,7 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
 
   // Verifica os dados antes de entrar:
   function fazerLogin() {
+    // Verifica se o e-mail termina com "@gmail.com":
     if (!email.trim().toLowerCase().endsWith('@gmail.com')) {
       mostrarAlerta(
         'Digite um e-mail válido para continuar.'
@@ -82,9 +85,11 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
   // Renderiza a tela de login:
   return (
     <ScrollView
+    // Ajusta o estilo do ScrollView para ocupar toda a tela e centralizar o conteúdo.
       contentContainerStyle={[
         styles.container,
         {
+          // Ajusta a altura mínima do ScrollView para ocupar toda a tela.
           minHeight: height,
           paddingHorizontal: telaGrande ? 28 : 22,
           paddingVertical: 30,
@@ -94,6 +99,7 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
     >
       <View
         style={[
+          // Ajusta o estilo do conteúdo da tela de login para centralizar e limitar a largura máxima.
           styles.conteudo,
           { maxWidth: telaGrande ? 430 : 380 },
         ]}
@@ -106,6 +112,7 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
           }
         >
           <LinearGradient
+          // Ajusta o gradiente linear para o título da tela de login.
             colors={['#326B54', '#8AB59D']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
@@ -117,11 +124,12 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
           Entre na sua conta para continuar.
         </Text>
 
-        {/* Campos de login */}
+        {/* Campos de login: */}
         <View style={styles.blocoCampos}>
           <Text style={styles.rotulo}>E-mail:</Text>
         
           <TextInput
+          // Ajusta o estilo do campo de entrada de e-mail, incluindo placeholder, valor e comportamento do teclado.
             style={styles.campo}
             placeholder="Digite seu e-mail"
             placeholderTextColor="#7A887F"
@@ -135,6 +143,7 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
           <Text style={styles.rotulo}>Senha:</Text>
 
           <TextInput
+            // Ajusta o estilo do campo de entrada de senha, incluindo placeholder, valor e comportamento.
             style={styles.campo}
             placeholder="Digite sua senha"
             placeholderTextColor="#7A887F"
@@ -145,8 +154,9 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
           />
         </View>
 
-        {/* Botão "Entrar" */}
+        {/* Botão "Entrar": */}
         <TouchableOpacity
+        // Ajusta o comportamento do botão "Entrar", chamando a função fazerLogin ao ser pressionado.
           onPress={fazerLogin}
           activeOpacity={0.8}
           style={styles.botaoArea}
@@ -161,7 +171,7 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Link para cadastrar-se */}
+        {/* Link para cadastrar-se: */}
         <View style={styles.areaCadastro}>
           <Text style={styles.textoCadastro}>
             Ainda não tem uma conta?
@@ -179,6 +189,7 @@ export default function LoginScreen({ onEntrar, onIrCadastro }) {
 // Estilos da tela:
 const styles = StyleSheet.create({
   container: {
+    // Ajusta o container principal da tela de login para ocupar toda a tela, centralizar o conteúdo e definir a cor de fundo.
     flexGrow: 1,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
@@ -187,12 +198,14 @@ const styles = StyleSheet.create({
 
   // Conteúdo da tela:
   conteudo: {
+    // Ajusta o conteúdo da tela de login para ocupar toda a largura, limitar a largura máxima e centralizar os itens.
     width: '100%',
     alignSelf: 'center',
   },
 
   // Título da tela de login:
   titulo: {
+    // Ajusta o estilo do título da tela de login, incluindo cor, fonte, tamanho e alinhamento.
     fontFamily: 'Poppins_900Black',
     fontSize: 33,
     color: '#000000',
@@ -207,6 +220,7 @@ const styles = StyleSheet.create({
 
   // Subtítulo da tela de login:
   subtitulo: {
+    // Ajusta o estilo do subtítulo da tela de login, incluindo cor, fonte, tamanho e alinhamento.
     color: '#527D68',
     fontFamily: 'Poppins_300Light',
     fontSize: 15,
@@ -217,6 +231,7 @@ const styles = StyleSheet.create({
 
   // Área dos campos de login:
   blocoCampos: {
+    // Ajusta o estilo do bloco que contém os campos de e-mail e senha, incluindo cor de fundo, preenchimento, borda arredondada e margem inferior.
     backgroundColor: '#EEF3EF',
     padding: 20,
     borderRadius: 16,
@@ -225,6 +240,7 @@ const styles = StyleSheet.create({
 
   // Rótulo dos campos de login:
   rotulo: {
+    // Ajusta o estilo do rótulo dos campos de login, incluindo cor, fonte, tamanho e margem inferior.
     color: '#326B54',
     fontFamily: 'Poppins_700Bold',
     fontSize: 14,
@@ -233,6 +249,7 @@ const styles = StyleSheet.create({
 
   // Campo de entrada de texto:
   campo: {
+    // Ajusta o estilo do campo de entrada de texto, incluindo altura, cor de fundo, borda, padding e fonte.
     height: 50,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -247,6 +264,7 @@ const styles = StyleSheet.create({
 
   // Área do botão "Entrar":
   botaoArea: {
+    // Ajusta a largura do botão "Entrar", arredonda os cantos e oculta o conteúdo que ultrapassa os limites.
     width: '100%',
     borderRadius: 14,
     overflow: 'hidden',
@@ -254,6 +272,7 @@ const styles = StyleSheet.create({
 
   // Botão "Entrar":
   botao: {
+    // Ajusta a altura mínima, o preenchimento e centraliza o conteúdo do botão "Entrar".
     minHeight: 52,
     paddingVertical: 14,
     alignItems: 'center',
@@ -262,6 +281,7 @@ const styles = StyleSheet.create({
 
   // Texto do botão "Entrar":
   textoBotao: {
+    // Ajusta a cor, fonte, tamanho e alinhamento do texto do botão "Entrar".
     color: '#FFFFFF',
     fontFamily: 'Poppins_700Bold',
     fontSize: 17,
@@ -269,6 +289,7 @@ const styles = StyleSheet.create({
 
   // Área do link para cadastro:
   areaCadastro: {
+    // Ajusta a área do link para cadastro, organizando os elementos em linha, permitindo quebra de linha e centralizando os itens.
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
@@ -277,6 +298,7 @@ const styles = StyleSheet.create({
 
   // Texto do link para cadastro:
   textoCadastro: {
+    // Ajusta o estilo do texto do link para cadastro, incluindo cor, fonte e tamanho.
     color: '#52685C',
     fontFamily: 'Poppins_300Light',
     fontSize: 13,
@@ -284,6 +306,7 @@ const styles = StyleSheet.create({
 
   // Link "Cadastre-se":
   linkCadastro: {
+    // Ajusta o estilo do link "Cadastre-se", incluindo cor, fonte, tamanho e margem esquerda.
     color: '#326B54',
     fontFamily: 'Poppins_700Bold',
     fontSize: 13,
