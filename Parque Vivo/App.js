@@ -70,6 +70,7 @@ export default function App() {
           onExplorar={() => setTela('mapa')}
           onReservar={() => setTela('reservar')}
           onPerfil={() => setTela('perfil')}
+          onAgendamento={() => setTela('agendamento')}
         />
       )}
 

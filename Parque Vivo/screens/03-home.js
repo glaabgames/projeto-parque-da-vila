@@ -34,6 +34,7 @@ export default function HomeScreen({
   onExplorar,
   onReservar,
   onPerfil,
+  onAgendamento,
 }) {
   const { width } = useWindowDimensions();
   // Define se a tela é grande (como em tablets ou desktops) ou estreita (como em celulares pequenos):
@@ -190,16 +191,16 @@ export default function HomeScreen({
           {/* Indicadores: */}
           <View style={styles.areaIndicadores}>
             <View style={styles.indicador}>
-              <Text style={styles.numeroIndicador}>06</Text>
+              <Text style={styles.numeroIndicador}>05</Text>
               <Text style={styles.textoIndicador}>
-                espaços para explorar
+                Espaços para explorar
               </Text>
             </View>
 
             <View style={styles.indicador}>
-              <Text style={styles.numeroIndicador}>03</Text>
+              <Text style={styles.numeroIndicador}>06</Text>
               <Text style={styles.textoIndicador}>
-                locais reserváveis
+                Locais reserváveis
               </Text>
             </View>
           </View>
@@ -248,7 +249,7 @@ export default function HomeScreen({
 
             <TouchableOpacity
               style={styles.atalho}
-              onPress={onPerfil}
+              onPress={onAgendamento}
               activeOpacity={0.7}
               accessibilityRole="button"
             >
@@ -260,7 +261,7 @@ export default function HomeScreen({
                 />
               </View>
               <Text style={styles.textoAtalho}>
-                Meu perfil.
+                Agendamento.
               </Text>
             </TouchableOpacity>
           </View>
