@@ -6,6 +6,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const pool = require('./db');
+const authRoutes = require('./routes/auth');
+const quadrasRoutes = require('./routes/quadras');
+const agendamentosRoutes = require('./routes/agendamentos');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +28,10 @@ app.use('/api', rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100
 }));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/quadras', quadrasRoutes);
+app.use('/api/agendamentos', agendamentosRoutes);
 
 // Verificar funcionamento da API e do banco
 app.get('/api/health', async (req, res) => {
