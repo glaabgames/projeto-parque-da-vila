@@ -8,13 +8,20 @@
     "backgroundColor": "#EAF4E9",
     "ios": {
       "supportsTablet": true,
-      "backgroundColor": "#EAF4E9"
+      "backgroundColor": "#EAF4E9",
+      "bundleIdentifier": "com.parquevivo.app"
     },
     "android": {
-      "backgroundColor": "#EAF4E9"
+      "backgroundColor": "#EAF4E9",
+      "package": "com.parquevivo.app"
     },
     "web": {
       "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9d94563a-068e-4404-adec-759887158bc7"
+      }
     }
   }
 }

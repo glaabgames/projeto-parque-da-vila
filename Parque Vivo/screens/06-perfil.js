@@ -23,7 +23,7 @@ import {
   Poppins_900Black,
 } from '@expo-google-fonts/poppins';
 
-const API_URL = 'http://192.168.0.142:3000';
+const API_URL = 'https://desktop-oduq1rj.tailf60fff.ts.net';
 
 export default function PerfilScreen({
   nomeUsuario = '',

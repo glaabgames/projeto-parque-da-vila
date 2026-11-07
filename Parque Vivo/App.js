@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, StatusBar, Alert } from 'react-native';
 
-const API_URL = 'http://192.168.0.142:3000';
+const API_URL = 'https://desktop-oduq1rj.tailf60fff.ts.net';
 
 import BoasVindas from './screens/00-splash';
 import LoginScreen from './screens/01-login';
@@ -142,7 +142,6 @@ export default function App() {
           onExplorar={() => setTela('mapa')}
           onReservar={() => setTela('reservar')}
           onPerfil={() => setTela('perfil')}
-          onAgendamento={() => abrirAgendamentos('home')}
         />
       )}
 
@@ -172,8 +171,6 @@ export default function App() {
           onVoltar={() => {
             if (origemAgendamento === 'perfil') {
               setTela('perfil');
-            } else if (origemAgendamento === 'home') {
-              setTela('home');
             } else {
               setTela('reservar');
             }

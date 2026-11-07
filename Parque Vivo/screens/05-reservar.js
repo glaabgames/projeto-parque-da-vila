@@ -17,7 +17,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 
-const API_URL = 'http://192.168.0.142:3000';
+const API_URL = 'https://desktop-oduq1rj.tailf60fff.ts.net';
 
 export default function ReservarScreen({
   onPerfil,

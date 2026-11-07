@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -17,7 +16,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 
-const API_URL = 'http://192.168.0.142:3000';
+const API_URL = 'https://desktop-oduq1rj.tailf60fff.ts.net';
 
 export default function AgendamentoScreen({
   localSelecionado = 'Campo de futebol',
@@ -31,6 +30,8 @@ export default function AgendamentoScreen({
 
   const telaGrande = width >= 768;
   const celularEstreito = width < 360;
+
+  const somenteHistorico = !espacoId;
 
   const tamanhoTitulo = telaGrande ? 32 : celularEstreito ? 25 : 29;
   const tamanhoBoasVindas = telaGrande ? 19 : celularEstreito ? 12 : 14;
@@ -48,7 +49,6 @@ export default function AgendamentoScreen({
     Poppins_900Black,
   });
 
-  // Cria os próximos sete dias.
   const dias = Array.from({ length: 7 }, (_, indice) => {
     const data = new Date();
     data.setDate(data.getDate() + indice);
@@ -81,7 +81,6 @@ export default function AgendamentoScreen({
   const [agendamentos, setAgendamentos] = useState([]);
   const [carregandoAgendamentos, setCarregandoAgendamentos] = useState(false);
 
-  // Guarda o ID da reserva que está sendo cancelada.
   const [cancelandoId, setCancelandoId] = useState(null);
 
   const horarios = [
@@ -89,7 +88,6 @@ export default function AgendamentoScreen({
     '13:00', '14:00', '15:00', '16:00',
   ];
 
-  // Mostra avisos no navegador ou no celular.
   function mostrarMensagem(tituloMensagem, mensagem) {
     if (Platform.OS === 'web') {
       window.alert(mensagem);
@@ -98,8 +96,21 @@ export default function AgendamentoScreen({
     }
   }
 
-  // Formata a data recebida do backend.
+  // Interpreta datas do MySQL como horário local, sem conversão UTC.
   function formatarData(valor) {
+    if (!valor) {
+      return '--/--/----';
+    }
+
+    const texto = String(valor);
+    const correspondencia = texto.match(
+      /^(\d{4})-(\d{2})-(\d{2})/
+    );
+
+    if (correspondencia) {
+      return `${correspondencia[3]}/${correspondencia[2]}/${correspondencia[1]}`;
+    }
+
     const data = new Date(valor);
 
     if (Number.isNaN(data.getTime())) {
@@ -109,8 +120,20 @@ export default function AgendamentoScreen({
     return data.toLocaleDateString('pt-BR');
   }
 
-  // Formata o horário recebido do backend.
   function formatarHora(valor) {
+    if (!valor) {
+      return '--:--';
+    }
+
+    const texto = String(valor);
+    const correspondencia = texto.match(
+      /[T ](\d{2}):(\d{2})/
+    );
+
+    if (correspondencia) {
+      return `${correspondencia[1]}:${correspondencia[2]}`;
+    }
+
     const data = new Date(valor);
 
     if (Number.isNaN(data.getTime())) {
@@ -124,7 +147,54 @@ export default function AgendamentoScreen({
     });
   }
 
-  // Busca todos os agendamentos do usuário no banco.
+  // Padroniza os horários retornados pelo backend.
+  function normalizarHorarios(dados) {
+    if (!Array.isArray(dados)) {
+      throw new Error('O servidor retornou uma disponibilidade inválida.');
+    }
+
+    return dados
+      .map((item) => {
+        const horario = String(item.horario || '').trim();
+
+        const correspondencia = horario.match(
+          /^(\d{2}):(\d{2})/
+        );
+
+        return correspondencia
+          ? `${correspondencia[1]}:${correspondencia[2]}`
+          : null;
+      })
+      .filter(Boolean);
+  }
+
+  // Consulta a disponibilidade diretamente no banco.
+  async function consultarDisponibilidade(data) {
+    if (!token || !espacoId) {
+      return [];
+    }
+
+    const resposta = await fetch(
+      `${API_URL}/api/agendamentos/disponibilidade/${espacoId}?data=${data}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(
+        dados.erro || 'Não foi possível consultar os horários.'
+      );
+    }
+
+    return normalizarHorarios(dados);
+  }
+
+  // Busca os agendamentos do usuário no banco.
   async function carregarAgendamentos() {
     if (!token) {
       setAgendamentos([]);
@@ -170,12 +240,11 @@ export default function AgendamentoScreen({
     }
   }
 
-  // Carrega o histórico quando a tela é aberta.
   useEffect(() => {
     carregarAgendamentos();
   }, [token]);
 
-  // Consulta os horários ocupados no banco de dados.
+  // Atualiza os horários sempre que o dia, espaço ou usuário mudar.
   useEffect(() => {
     let ativo = true;
 
@@ -188,32 +257,16 @@ export default function AgendamentoScreen({
 
       setCarregandoHorarios(true);
       setHorariosOcupados([]);
+      setHorarioSelecionado(null);
 
       try {
         const data = dias[diaSelecionado].dataISO;
-
-        const resposta = await fetch(
-          `${API_URL}/api/agendamentos/disponibilidade/${espacoId}?data=${data}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const dados = await resposta.json();
-
-        if (!resposta.ok) {
-          throw new Error(
-            dados.erro || 'Não foi possível consultar os horários.'
-          );
-        }
+        const horarios = await consultarDisponibilidade(data);
 
         if (ativo) {
-          setHorariosOcupados(
-            dados.map((item) => item.horario)
-          );
+          setHorariosOcupados(horarios);
         }
+
       } catch (erro) {
         if (ativo) {
           mostrarMensagem('Erro', erro.message);
@@ -232,13 +285,16 @@ export default function AgendamentoScreen({
     };
   }, [diaSelecionado, espacoId, token]);
 
-  // Verifica se o horário já está reservado.
   function horarioIndisponivel(horario) {
     return horariosOcupados.includes(horario);
   }
 
   // Confirma a reserva no backend.
   async function confirmarReserva() {
+    if (!espacoId) {
+      return;
+    }
+
     if (!horarioSelecionado) {
       mostrarMensagem(
         'Atenção',
@@ -247,7 +303,7 @@ export default function AgendamentoScreen({
       return;
     }
 
-    if (!token || !espacoId) {
+    if (!token) {
       mostrarMensagem(
         'Erro',
         'Não foi possível identificar o usuário ou o espaço.'
@@ -260,7 +316,9 @@ export default function AgendamentoScreen({
         'Horário indisponível',
         'Esse horário já foi reservado.'
       );
+
       setHorarioSelecionado(null);
+
       return;
     }
 
@@ -287,17 +345,22 @@ export default function AgendamentoScreen({
       const dados = await resposta.json();
 
       if (!resposta.ok) {
+        // Se outra conta reservou o horário, atualiza a tela.
+        if (resposta.status === 409) {
+          const disponibilidade = await consultarDisponibilidade(data);
+          setHorariosOcupados(disponibilidade);
+        }
+
         throw new Error(
           dados.erro || 'Não foi possível confirmar a reserva.'
         );
       }
 
-      setHorariosOcupados((lista) => [
-        ...lista,
-        horarioSelecionado,
-      ]);
-
       setHorarioSelecionado(null);
+
+      // Busca novamente a disponibilidade no banco.
+      const disponibilidade = await consultarDisponibilidade(data);
+      setHorariosOcupados(disponibilidade);
 
       await carregarAgendamentos();
 
@@ -338,39 +401,19 @@ export default function AgendamentoScreen({
 
       if (!resposta.ok) {
         throw new Error(
-          dados.erro || dados.mensagem || 'Não foi possível cancelar a reserva.'
+          dados.erro ||
+          dados.mensagem ||
+          'Não foi possível cancelar a reserva.'
         );
       }
 
-      // Atualiza a lista de reservas.
       await carregarAgendamentos();
 
-      // Consulta novamente os horários do dia selecionado.
-      // Assim, o horário cancelado volta a aparecer como disponível.
       if (espacoId) {
         const data = dias[diaSelecionado].dataISO;
+        const disponibilidade = await consultarDisponibilidade(data);
 
-        const respostaDisponibilidade = await fetch(
-          `${API_URL}/api/agendamentos/disponibilidade/${espacoId}?data=${data}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const disponibilidade = await respostaDisponibilidade.json();
-
-        if (!respostaDisponibilidade.ok) {
-          throw new Error(
-            disponibilidade.erro ||
-            'Reserva cancelada, mas não foi possível atualizar os horários.'
-          );
-        }
-
-        setHorariosOcupados(
-          disponibilidade.map((item) => item.horario)
-        );
+        setHorariosOcupados(disponibilidade);
       }
 
       setHorarioSelecionado(null);
@@ -387,7 +430,6 @@ export default function AgendamentoScreen({
     }
   }
 
-  // Solicita confirmação antes de cancelar.
   function solicitarCancelamento(reserva) {
     if (cancelandoId !== null) {
       return;
@@ -454,7 +496,7 @@ export default function AgendamentoScreen({
             activeOpacity={0.7}
             style={styles.botaoVoltar}
             accessibilityRole="button"
-            accessibilityLabel="Voltar para a tela de reservas"
+            accessibilityLabel="Voltar"
           >
             <Text style={styles.flechaVoltar}>‹</Text>
           </TouchableOpacity>
@@ -502,180 +544,184 @@ export default function AgendamentoScreen({
             { maxWidth: telaGrande ? 760 : 480 },
           ]}
         >
-          <View
-            style={[
-              styles.cartaoApresentacao,
-              { padding: telaGrande ? 22 : 16 },
-            ]}
-          >
-            <Text style={styles.subtituloApresentacao}>
-              Aproveite, faça sua reserva.
-            </Text>
-
-            <MaskedView
-              style={[styles.areaTitulo, { height: alturaTitulo }]}
-              maskElement={
-                <Text
-                  style={[
-                    styles.tituloApresentacao,
-                    {
-                      fontSize: tamanhoTitulo,
-                      lineHeight: tamanhoTitulo * 1.25,
-                    },
-                  ]}
-                >
-                  {titulo}
+          {!somenteHistorico && (
+            <>
+              <View
+                style={[
+                  styles.cartaoApresentacao,
+                  { padding: telaGrande ? 22 : 16 },
+                ]}
+              >
+                <Text style={styles.subtituloApresentacao}>
+                  Aproveite, faça sua reserva.
                 </Text>
-              }
-            >
-              <LinearGradient
-                colors={['#326B54', '#8AB59D']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.gradienteTitulo}
-              />
-            </MaskedView>
 
-            <Text style={styles.descricaoApresentacao}>
-              Escolha o dia e o horário disponível.
-            </Text>
-          </View>
-
-          <Text style={styles.tituloSecao}>
-            Escolha o dia da reserva
-          </Text>
-
-          <View style={styles.cartaoCalendario}>
-            {dias.map((dia, indice) => {
-              const selecionado = diaSelecionado === indice;
-
-              return (
-                <TouchableOpacity
-                  key={dia.diaMes + indice}
-                  onPress={() => {
-                    setDiaSelecionado(indice);
-                    setHorarioSelecionado(null);
-                  }}
-                  activeOpacity={0.8}
-                  style={[
-                    styles.botaoDia,
-                    selecionado && styles.botaoDiaSelecionado,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${dia.diaSemana}, ${dia.diaMes}`}
-                >
-                  <Text
-                    style={[
-                      styles.textoDiaSemana,
-                      selecionado && styles.textoDiaSelecionado,
-                    ]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                  >
-                    {dia.diaSemana}
-                  </Text>
-
-                  <Text
-                    style={[
-                      styles.textoDiaMes,
-                      selecionado && styles.textoDiaSelecionado,
-                    ]}
-                  >
-                    {dia.diaMes}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <Text style={styles.tituloSecao}>
-            Horários disponíveis
-          </Text>
-
-          <Text style={styles.textoAjuda}>
-            {dias[diaSelecionado].diaSemana}, dia {dias[diaSelecionado].diaMes}
-          </Text>
-
-          <View style={styles.listaHorarios}>
-            {horarios.map((horario) => {
-              const indisponivel = horarioIndisponivel(horario);
-              const selecionado = horarioSelecionado === horario;
-
-              return (
-                <TouchableOpacity
-                  key={horario}
-                  disabled={
-                    indisponivel ||
-                    carregandoHorarios ||
-                    salvandoReserva
-                  }
-                  onPress={() => setHorarioSelecionado(horario)}
-                  activeOpacity={0.8}
-                  style={[
-                    styles.botaoHorario,
-                    selecionado && styles.horarioSelecionado,
-                    indisponivel && styles.horarioIndisponivel,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{
-                    disabled: indisponivel,
-                    selected: selecionado,
-                  }}
-                  accessibilityLabel={
-                    indisponivel
-                      ? `${horario}, indisponível`
-                      : `${horario}, disponível`
+                <MaskedView
+                  style={[styles.areaTitulo, { height: alturaTitulo }]}
+                  maskElement={
+                    <Text
+                      style={[
+                        styles.tituloApresentacao,
+                        {
+                          fontSize: tamanhoTitulo,
+                          lineHeight: tamanhoTitulo * 1.25,
+                        },
+                      ]}
+                    >
+                      {titulo}
+                    </Text>
                   }
                 >
-                  <Text
-                    style={[
-                      styles.textoHorario,
-                      selecionado && styles.textoHorarioSelecionado,
-                      indisponivel && styles.textoHorarioRiscado,
-                    ]}
-                  >
-                    {horario}
-                  </Text>
+                  <LinearGradient
+                    colors={['#326B54', '#8AB59D']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.gradienteTitulo}
+                  />
+                </MaskedView>
 
-                  <Text
-                    style={[
-                      styles.statusHorario,
-                      indisponivel && styles.statusIndisponivel,
-                    ]}
-                  >
-                    {carregandoHorarios
-                      ? 'Consultando...'
-                      : indisponivel
-                        ? 'Indisponível'
-                        : 'Disponível'}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                <Text style={styles.descricaoApresentacao}>
+                  Escolha o dia e o horário disponível.
+                </Text>
+              </View>
 
-          <Text style={styles.avisoDuracao}>
-            Cada reserva tem duração de 1 hora.
-          </Text>
-
-          <TouchableOpacity
-            onPress={confirmarReserva}
-            disabled={salvandoReserva || carregandoHorarios}
-            activeOpacity={0.8}
-            style={styles.areaBotaoConfirmar}
-            accessibilityRole="button"
-          >
-            <LinearGradient
-              colors={['#326B54', '#8AB59D']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.botaoConfirmar}
-            >
-              <Text style={styles.textoBotaoConfirmar}>
-                {salvandoReserva ? 'Confirmando...' : 'Confirmar reserva'}
+              <Text style={styles.tituloSecao}>
+                Escolha o dia da reserva
               </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+
+              <View style={styles.cartaoCalendario}>
+                {dias.map((dia, indice) => {
+                  const selecionado = diaSelecionado === indice;
+
+                  return (
+                    <TouchableOpacity
+                      key={dia.diaMes + indice}
+                      onPress={() => {
+                        setDiaSelecionado(indice);
+                        setHorarioSelecionado(null);
+                      }}
+                      activeOpacity={0.8}
+                      style={[
+                        styles.botaoDia,
+                        selecionado && styles.botaoDiaSelecionado,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${dia.diaSemana}, ${dia.diaMes}`}
+                    >
+                      <Text
+                        style={[
+                          styles.textoDiaSemana,
+                          selecionado && styles.textoDiaSelecionado,
+                        ]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                      >
+                        {dia.diaSemana}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.textoDiaMes,
+                          selecionado && styles.textoDiaSelecionado,
+                        ]}
+                      >
+                        {dia.diaMes}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.tituloSecao}>
+                Horários disponíveis
+              </Text>
+
+              <Text style={styles.textoAjuda}>
+                {dias[diaSelecionado].diaSemana}, dia {dias[diaSelecionado].diaMes}
+              </Text>
+
+              <View style={styles.listaHorarios}>
+                {horarios.map((horario) => {
+                  const indisponivel = horarioIndisponivel(horario);
+                  const selecionado = horarioSelecionado === horario;
+
+                  return (
+                    <TouchableOpacity
+                      key={horario}
+                      disabled={
+                        indisponivel ||
+                        carregandoHorarios ||
+                        salvandoReserva
+                      }
+                      onPress={() => setHorarioSelecionado(horario)}
+                      activeOpacity={0.8}
+                      style={[
+                        styles.botaoHorario,
+                        selecionado && styles.horarioSelecionado,
+                        indisponivel && styles.horarioIndisponivel,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityState={{
+                        disabled: indisponivel || carregandoHorarios,
+                        selected: selecionado,
+                      }}
+                      accessibilityLabel={
+                        indisponivel
+                          ? `${horario}, indisponível`
+                          : `${horario}, disponível`
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.textoHorario,
+                          selecionado && styles.textoHorarioSelecionado,
+                          indisponivel && styles.textoHorarioRiscado,
+                        ]}
+                      >
+                        {horario}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.statusHorario,
+                          indisponivel && styles.statusIndisponivel,
+                        ]}
+                      >
+                        {carregandoHorarios
+                          ? 'Consultando...'
+                          : indisponivel
+                            ? 'Indisponível'
+                            : 'Disponível'}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.avisoDuracao}>
+                Cada reserva tem duração de 1 hora.
+              </Text>
+
+              <TouchableOpacity
+                onPress={confirmarReserva}
+                disabled={salvandoReserva || carregandoHorarios}
+                activeOpacity={0.8}
+                style={styles.areaBotaoConfirmar}
+                accessibilityRole="button"
+              >
+                <LinearGradient
+                  colors={['#326B54', '#8AB59D']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.botaoConfirmar}
+                >
+                  <Text style={styles.textoBotaoConfirmar}>
+                    {salvandoReserva ? 'Confirmando...' : 'Confirmar reserva'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </>
+          )}
 
           <Text style={styles.tituloSecao}>
             Minhas reservas
@@ -1077,7 +1123,6 @@ const styles = StyleSheet.create({
     color: '#888888',
   },
 
-  // Botão de cancelamento da reserva.
   botaoCancelar: {
     alignSelf: 'flex-start',
     backgroundColor: '#FCE8E8',
@@ -1099,3 +1144,4 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 });
+
