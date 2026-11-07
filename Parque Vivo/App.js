@@ -17,9 +17,12 @@ export default function App() {
   const [tela, setTela] = useState('splash');
 
   const [nomeUsuario, setNomeUsuario] = useState('');
+  const [emailUsuario, setEmailUsuario] = useState('');
   const [localSelecionado, setLocalSelecionado] = useState(null);
   const [token, setToken] = useState('');
+  const [origemAgendamento, setOrigemAgendamento] = useState('reservar');
 
+  // LOGIN
   const realizarLogin = async (email, senha) => {
     try {
       const resposta = await fetch(`${API_URL}/api/auth/login`, {
@@ -41,7 +44,9 @@ export default function App() {
       setToken(dados.token);
 
       const usuario = dados.usuario || dados.user || {};
+
       setNomeUsuario(usuario.nome || '');
+      setEmailUsuario(usuario.email || email);
 
       Alert.alert('Sucesso', 'Login realizado com sucesso!');
       setTela('home');
@@ -52,6 +57,7 @@ export default function App() {
     }
   };
 
+  // CADASTRO
   const realizarCadastro = async (nome, email, senha) => {
     try {
       const resposta = await fetch(`${API_URL}/api/auth/cadastro`, {
@@ -71,6 +77,7 @@ export default function App() {
       }
 
       setNomeUsuario(nome);
+      setEmailUsuario(email);
 
       Alert.alert(
         'Cadastro realizado!',
@@ -83,6 +90,29 @@ export default function App() {
       console.log('Erro no cadastro:', erro);
       Alert.alert('Erro de conexão', 'Não foi possível conectar ao servidor.');
     }
+  };
+
+  // ABRIR AGENDAMENTOS
+  const abrirAgendamentos = (origem, espaco = null) => {
+    setOrigemAgendamento(origem);
+    setLocalSelecionado(espaco);
+    setTela('agendamento');
+  };
+
+  // ATUALIZAR DADOS DO PERFIL
+  const atualizarPerfil = (usuario) => {
+    setNomeUsuario(usuario.nome);
+    setEmailUsuario(usuario.email);
+  };
+
+  // SAIR DA CONTA
+  const sairDaConta = () => {
+    setToken('');
+    setNomeUsuario('');
+    setEmailUsuario('');
+    setLocalSelecionado(null);
+    setOrigemAgendamento('reservar');
+    setTela('login');
   };
 
   return (
@@ -112,7 +142,7 @@ export default function App() {
           onExplorar={() => setTela('mapa')}
           onReservar={() => setTela('reservar')}
           onPerfil={() => setTela('perfil')}
-          onAgendamento={() => setTela('agendamento')}
+          onAgendamento={() => abrirAgendamentos('home')}
         />
       )}
 
@@ -129,10 +159,7 @@ export default function App() {
           onVoltar={() => setTela('home')}
           onExplorar={() => setTela('mapa')}
           onPerfil={() => setTela('perfil')}
-          onAgendar={(espaco) => {
-            setLocalSelecionado(espaco);
-            setTela('agendamento');
-          }}
+          onAgendar={(espaco) => abrirAgendamentos('reservar', espaco)}
         />
       )}
 
@@ -142,16 +169,28 @@ export default function App() {
           espacoId={localSelecionado?.id}
           nomeUsuario={nomeUsuario}
           token={token}
-          onVoltar={() => setTela('reservar')}
+          onVoltar={() => {
+            if (origemAgendamento === 'perfil') {
+              setTela('perfil');
+            } else if (origemAgendamento === 'home') {
+              setTela('home');
+            } else {
+              setTela('reservar');
+            }
+          }}
           onPerfil={() => setTela('perfil')}
         />
       )}
 
       {tela === 'perfil' && (
         <PerfilScreen
+          nomeUsuario={nomeUsuario}
+          emailUsuario={emailUsuario}
+          token={token}
+          onPerfilAtualizado={atualizarPerfil}
           onVoltar={() => setTela('home')}
-          onExplorar={() => setTela('mapa')}
-          onReservar={() => setTela('reservar')}
+          onAgendamentos={() => abrirAgendamentos('perfil')}
+          onSair={sairDaConta}
         />
       )}
     </View>

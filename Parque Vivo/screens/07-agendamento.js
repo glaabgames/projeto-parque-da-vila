@@ -81,6 +81,9 @@ export default function AgendamentoScreen({
   const [agendamentos, setAgendamentos] = useState([]);
   const [carregandoAgendamentos, setCarregandoAgendamentos] = useState(false);
 
+  // Guarda o ID da reserva que está sendo cancelada.
+  const [cancelandoId, setCancelandoId] = useState(null);
+
   const horarios = [
     '08:00', '09:00', '10:00', '11:00',
     '13:00', '14:00', '15:00', '16:00',
@@ -234,20 +237,6 @@ export default function AgendamentoScreen({
     return horariosOcupados.includes(horario);
   }
 
-  // Calcula o horário final: uma hora depois.
-  function calcularHorarioFinal(horarioInicial) {
-    const [hora, minuto] = horarioInicial.split(':').map(Number);
-
-    const dataFinal = new Date();
-    dataFinal.setHours(hora + 1, minuto, 0, 0);
-
-    return dataFinal.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  }
-
   // Confirma a reserva no backend.
   async function confirmarReserva() {
     if (!horarioSelecionado) {
@@ -310,7 +299,6 @@ export default function AgendamentoScreen({
 
       setHorarioSelecionado(null);
 
-      // Atualiza o histórico diretamente do banco.
       await carregarAgendamentos();
 
       mostrarMensagem(
@@ -324,6 +312,116 @@ export default function AgendamentoScreen({
     } finally {
       setSalvandoReserva(false);
     }
+  }
+
+  // Executa o cancelamento no backend.
+  async function cancelarAgendamento(id) {
+    if (!token) {
+      mostrarMensagem('Erro', 'Sua sessão expirou. Entre novamente.');
+      return;
+    }
+
+    setCancelandoId(id);
+
+    try {
+      const resposta = await fetch(
+        `${API_URL}/api/agendamentos/${id}/cancelar`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.erro || dados.mensagem || 'Não foi possível cancelar a reserva.'
+        );
+      }
+
+      // Atualiza a lista de reservas.
+      await carregarAgendamentos();
+
+      // Consulta novamente os horários do dia selecionado.
+      // Assim, o horário cancelado volta a aparecer como disponível.
+      if (espacoId) {
+        const data = dias[diaSelecionado].dataISO;
+
+        const respostaDisponibilidade = await fetch(
+          `${API_URL}/api/agendamentos/disponibilidade/${espacoId}?data=${data}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const disponibilidade = await respostaDisponibilidade.json();
+
+        if (!respostaDisponibilidade.ok) {
+          throw new Error(
+            disponibilidade.erro ||
+            'Reserva cancelada, mas não foi possível atualizar os horários.'
+          );
+        }
+
+        setHorariosOcupados(
+          disponibilidade.map((item) => item.horario)
+        );
+      }
+
+      setHorarioSelecionado(null);
+
+      mostrarMensagem(
+        'Reserva cancelada',
+        'Sua reserva foi cancelada com sucesso. O horário está disponível novamente.'
+      );
+
+    } catch (erro) {
+      mostrarMensagem('Erro ao cancelar', erro.message);
+    } finally {
+      setCancelandoId(null);
+    }
+  }
+
+  // Solicita confirmação antes de cancelar.
+  function solicitarCancelamento(reserva) {
+    if (cancelandoId !== null) {
+      return;
+    }
+
+    const mensagem =
+      `Deseja realmente cancelar a reserva de ${reserva.local} ` +
+      `no dia ${reserva.dia}, às ${reserva.horarioInicial}?`;
+
+    if (Platform.OS === 'web') {
+      const confirmou = window.confirm(mensagem);
+
+      if (confirmou) {
+        cancelarAgendamento(reserva.id);
+      }
+
+      return;
+    }
+
+    Alert.alert(
+      'Cancelar reserva',
+      mensagem,
+      [
+        {
+          text: 'Voltar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sim, cancelar',
+          style: 'destructive',
+          onPress: () => cancelarAgendamento(reserva.id),
+        },
+      ]
+    );
   }
 
   if (!fontesCarregadas) {
@@ -593,36 +691,62 @@ export default function AgendamentoScreen({
                 Você ainda não possui agendamentos.
               </Text>
             ) : (
-              agendamentos.map((reserva) => (
-                <View
-                  key={reserva.id}
-                  style={[
-                    styles.cartaoAgendamento,
-                    reserva.status !== 'confirmado' &&
-                      styles.cartaoCancelado,
-                  ]}
-                >
-                  <Text style={styles.nomeAgendamento}>
-                    {reserva.local}
-                  </Text>
+              agendamentos.map((reserva) => {
+                const reservaConfirmada =
+                  reserva.status === 'confirmado';
 
-                  <Text style={styles.detalheAgendamento}>
-                    {reserva.dia} — {reserva.horarioInicial} às {reserva.horarioFinal}
-                  </Text>
+                const estaCancelando =
+                  cancelandoId === reserva.id;
 
-                  <Text
+                return (
+                  <View
+                    key={reserva.id}
                     style={[
-                      styles.statusAgendamento,
-                      reserva.status !== 'confirmado' &&
-                        styles.textoCancelado,
+                      styles.cartaoAgendamento,
+                      !reservaConfirmada && styles.cartaoCancelado,
                     ]}
                   >
-                    {reserva.status === 'confirmado'
-                      ? 'Confirmado'
-                      : 'Cancelado'}
-                  </Text>
-                </View>
-              ))
+                    <Text style={styles.nomeAgendamento}>
+                      {reserva.local}
+                    </Text>
+
+                    <Text style={styles.detalheAgendamento}>
+                      {reserva.dia} — {reserva.horarioInicial} às {reserva.horarioFinal}
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.statusAgendamento,
+                        !reservaConfirmada && styles.textoCancelado,
+                      ]}
+                    >
+                      {reservaConfirmada
+                        ? 'Confirmado'
+                        : 'Cancelado'}
+                    </Text>
+
+                    {reservaConfirmada && (
+                      <TouchableOpacity
+                        onPress={() => solicitarCancelamento(reserva)}
+                        disabled={cancelandoId !== null}
+                        activeOpacity={0.8}
+                        style={[
+                          styles.botaoCancelar,
+                          cancelandoId !== null && styles.botaoCancelarDesabilitado,
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Cancelar reserva de ${reserva.local}`}
+                      >
+                        <Text style={styles.textoBotaoCancelar}>
+                          {estaCancelando
+                            ? 'Cancelando...'
+                            : 'Cancelar reserva'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              })
             )}
           </View>
         </View>
@@ -951,5 +1075,27 @@ const styles = StyleSheet.create({
 
   textoCancelado: {
     color: '#888888',
+  },
+
+  // Botão de cancelamento da reserva.
+  botaoCancelar: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FCE8E8',
+    borderWidth: 1,
+    borderColor: '#E7B6B6',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginTop: 12,
+  },
+
+  textoBotaoCancelar: {
+    color: '#B3261E',
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 12,
+  },
+
+  botaoCancelarDesabilitado: {
+    opacity: 0.5,
   },
 });
