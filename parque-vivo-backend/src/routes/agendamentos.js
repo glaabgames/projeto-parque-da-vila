@@ -1,9 +1,21 @@
-
 const express = require('express');
 const pool = require('../db');
 const { autenticar } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Converte uma data local para o formato aceito pelo MySQL DATETIME.
+// Não utiliza Date.toISOString(), pois isso converteria o horário para UTC.
+function formatarDataMySQL(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    const hora = String(data.getHours()).padStart(2, '0');
+    const minuto = String(data.getMinutes()).padStart(2, '0');
+    const segundo = String(data.getSeconds()).padStart(2, '0');
+
+    return `${ano}-${mes}-${dia} ${hora}:${minuto}:${segundo}`;
+}
 
 // LISTAR AGENDAMENTOS DO USUÁRIO
 router.get('/', autenticar, async (req, res) => {
@@ -13,14 +25,14 @@ router.get('/', autenticar, async (req, res) => {
                 a.id,
                 a.usuario_id,
                 a.espaco_id,
-                a.inicio,
-                a.fim,
+                DATE_FORMAT(a.inicio, '%Y-%m-%d %H:%i:%s') AS inicio,
+                DATE_FORMAT(a.fim, '%Y-%m-%d %H:%i:%s') AS fim,
                 a.status,
                 e.nome AS espaco
              FROM agendamentos a
              INNER JOIN espacos e ON e.id = a.espaco_id
              WHERE a.usuario_id = ?
-             ORDER BY a.inicio DESC`,
+             ORDER BY a.criado_em DESC, a.id DESC`,
             [req.usuario.id]
         );
 
@@ -28,12 +40,14 @@ router.get('/', autenticar, async (req, res) => {
 
     } catch (erro) {
         console.error('Erro ao buscar agendamentos:', erro);
+
         return res.status(500).json({
             erro: 'Erro ao consultar agendamentos.'
         });
     }
 });
-// Consultar horários já reservados por qualquer usuário
+
+// CONSULTAR HORÁRIOS JÁ RESERVADOS POR QUALQUER USUÁRIO
 router.get('/disponibilidade/:espacoId', autenticar, async (req, res) => {
     try {
         const { espacoId } = req.params;
@@ -51,17 +65,23 @@ router.get('/disponibilidade/:espacoId', autenticar, async (req, res) => {
             });
         }
 
-        const [horarios] = await pool.query(
-            `SELECT DATE_FORMAT(inicio, '%H:%i') AS horario
+        const [horarios] = await pool.execute(
+            `SELECT
+                DATE_FORMAT(inicio, '%H:%i') AS horario
              FROM agendamentos
              WHERE espaco_id = ?
              AND status = 'confirmado'
-             AND DATE(inicio) = ?
+             AND inicio >= ?
+             AND inicio < DATE_ADD(?, INTERVAL 1 DAY)
              ORDER BY inicio`,
-            [Number(espacoId), data]
+            [
+                Number(espacoId),
+                `${data} 00:00:00`,
+                `${data} 00:00:00`
+            ]
         );
 
-        return res.json(horarios);
+        return res.status(200).json(horarios);
 
     } catch (erro) {
         console.error('Erro ao consultar disponibilidade:', erro);
@@ -71,9 +91,11 @@ router.get('/disponibilidade/:espacoId', autenticar, async (req, res) => {
         });
     }
 });
+
 // CRIAR AGENDAMENTO
 router.post('/', autenticar, async (req, res) => {
     const { espaco_id, inicio } = req.body;
+    console.log('HORÁRIO RECEBIDO DO APP:', inicio);
 
     if (!espaco_id || !inicio) {
         return res.status(400).json({
@@ -81,9 +103,48 @@ router.post('/', autenticar, async (req, res) => {
         });
     }
 
-    const dataInicio = new Date(inicio);
+    if (!Number.isInteger(Number(espaco_id)) || Number(espaco_id) <= 0) {
+        return res.status(400).json({
+            erro: 'Espaço inválido.'
+        });
+    }
 
-    if (Number.isNaN(dataInicio.getTime())) {
+    // Aceita somente data e hora local, sem indicação de fuso horário.
+    const correspondencia = String(inicio).match(
+        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/
+    );
+
+    if (!correspondencia) {
+        return res.status(400).json({
+            erro: 'Informe a data e o horário no formato correto.'
+        });
+    }
+
+    const ano = Number(correspondencia[1]);
+    const mes = Number(correspondencia[2]);
+    const dia = Number(correspondencia[3]);
+    const hora = Number(correspondencia[4]);
+    const minuto = Number(correspondencia[5]);
+    const segundo = Number(correspondencia[6]);
+
+    const dataInicio = new Date(
+        ano,
+        mes - 1,
+        dia,
+        hora,
+        minuto,
+        segundo
+    );
+
+    // Impede datas inexistentes, como 31/02, e horários inválidos.
+    if (
+        dataInicio.getFullYear() !== ano ||
+        dataInicio.getMonth() !== mes - 1 ||
+        dataInicio.getDate() !== dia ||
+        dataInicio.getHours() !== hora ||
+        dataInicio.getMinutes() !== minuto ||
+        dataInicio.getSeconds() !== segundo
+    ) {
         return res.status(400).json({
             erro: 'Data e horário inválidos.'
         });
@@ -95,40 +156,51 @@ router.post('/', autenticar, async (req, res) => {
         });
     }
 
+    // O MySQL recebe strings locais, sem conversão automática de fuso.
+    const inicioMySQL = formatarDataMySQL(dataInicio);
+
+    const dataFim = new Date(
+        dataInicio.getTime() + 60 * 60 * 1000
+    );
+
+    const fimMySQL = formatarDataMySQL(dataFim);
+
     let conexao;
 
     try {
         conexao = await pool.getConnection();
+
         await conexao.beginTransaction();
 
+        // O bloqueio da linha do espaço evita duas reservas simultâneas
+        // para o mesmo espaço durante a verificação de disponibilidade.
         const [espacos] = await conexao.execute(
             `SELECT id, duracao_reserva_minutos
              FROM espacos
              WHERE id = ? AND ativo = 1
              FOR UPDATE`,
-            [espaco_id]
+            [Number(espaco_id)]
         );
 
         if (espacos.length === 0) {
             await conexao.rollback();
+
             return res.status(404).json({
                 erro: 'Espaço não encontrado ou indisponível.'
             });
         }
 
-        const duracao = espacos[0].duracao_reserva_minutos;
+        const duracao = Number(espacos[0].duracao_reserva_minutos);
 
-        if (!duracao || duracao !== 60) {
+        if (duracao !== 60) {
             await conexao.rollback();
+
             return res.status(400).json({
                 erro: 'Este espaço não possui reserva de uma hora configurada.'
             });
         }
 
-        const dataFim = new Date(
-            dataInicio.getTime() + duracao * 60 * 1000
-        );
-
+        // Verifica sobreposição de intervalos, não apenas horários iguais.
         const [conflitos] = await conexao.execute(
             `SELECT id
              FROM agendamentos
@@ -137,11 +209,16 @@ router.post('/', autenticar, async (req, res) => {
              AND inicio < ?
              AND fim > ?
              LIMIT 1`,
-            [espaco_id, dataFim, dataInicio]
+            [
+                Number(espaco_id),
+                fimMySQL,
+                inicioMySQL
+            ]
         );
 
         if (conflitos.length > 0) {
             await conexao.rollback();
+
             return res.status(409).json({
                 erro: 'Horário já reservado.'
             });
@@ -149,9 +226,14 @@ router.post('/', autenticar, async (req, res) => {
 
         const [resultado] = await conexao.execute(
             `INSERT INTO agendamentos
-             (usuario_id, espaco_id, inicio, fim, status)
+                (usuario_id, espaco_id, inicio, fim, status)
              VALUES (?, ?, ?, ?, 'confirmado')`,
-            [req.usuario.id, espaco_id, dataInicio, dataFim]
+            [
+                req.usuario.id,
+                Number(espaco_id),
+                inicioMySQL,
+                fimMySQL
+            ]
         );
 
         await conexao.commit();
@@ -160,15 +242,17 @@ router.post('/', autenticar, async (req, res) => {
             mensagem: 'Agendamento confirmado!',
             agendamento: {
                 id: resultado.insertId,
-                espaco_id,
-                inicio: dataInicio,
-                fim: dataFim,
+                espaco_id: Number(espaco_id),
+                inicio: inicioMySQL,
+                fim: fimMySQL,
                 status: 'confirmado'
             }
         });
 
     } catch (erro) {
-        if (conexao) await conexao.rollback();
+        if (conexao) {
+            await conexao.rollback();
+        }
 
         console.error('Erro ao criar agendamento:', erro);
 
@@ -177,7 +261,9 @@ router.post('/', autenticar, async (req, res) => {
         });
 
     } finally {
-        if (conexao) conexao.release();
+        if (conexao) {
+            conexao.release();
+        }
     }
 });
 
@@ -190,7 +276,10 @@ router.patch('/:id/cancelar', autenticar, async (req, res) => {
              WHERE id = ?
              AND usuario_id = ?
              AND status = 'confirmado'`,
-            [req.params.id, req.usuario.id]
+            [
+                req.params.id,
+                req.usuario.id
+            ]
         );
 
         if (resultado.affectedRows === 0) {
