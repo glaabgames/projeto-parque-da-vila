@@ -1,9 +1,6 @@
-
+// Importa ferramentas:
 import React, { useState } from 'react';
 import { View, StatusBar, Alert } from 'react-native';
-
-// Endereço da API
-const API_URL = 'https://desktop-oduq1rj.tailf60fff.ts.net';
 
 // Importação das telas existentes
 import BoasVindas from './screens/00-splash';
@@ -16,25 +13,17 @@ import HistoricoScreen from './screens/06-historico';
 import AgendamentoScreen from './screens/07-agendamento';
 
 export default function App() {
-
-  // Controle das telas
+  // Controle das telas:
   const [tela, setTela] = useState('splash');
-
-  // Dados do usuário
+  // Dados do usuário:
   const [nomeUsuario, setNomeUsuario] = useState('');
-
-  // Dados das reservas
+  // Dados das reservas:
   const [localSelecionado, setLocalSelecionado] = useState(null);
   const [reservas, setReservas] = useState([]);
-
-  // Token de autenticação
+  // Token de autenticação:
   const [token, setToken] = useState('');
 
-
-  // =====================================
-  // LOGIN
-  // =====================================
-
+  // Login de usuário:
   const realizarLogin = async (email, senha) => {
     try {
       const resposta = await fetch(`${API_URL}/api/auth/login`, {
@@ -79,11 +68,7 @@ export default function App() {
     }
   };
 
-
-  // =====================================
-  // CADASTRO
-  // =====================================
-
+  // Cadastro de usuário:
   const realizarCadastro = async (nome, email, senha) => {
     try {
       const resposta = await fetch(`${API_URL}/api/auth/cadastro`, {
@@ -122,11 +107,7 @@ export default function App() {
     }
   };
 
-
-  // =====================================
-  // ABRIR AGENDAMENTO
-  // =====================================
-
+  // Abrir o agendamento:
   const abrirAgendamentos = (espaco = null) => {
 
     // Aceita tanto um objeto quanto um nome de espaço
@@ -139,11 +120,7 @@ export default function App() {
     setTela('agendamento');
   };
 
-
-  // =====================================
-  // CONFIRMAR RESERVA
-  // =====================================
-
+  // Confirmar reserva:
   const confirmarReserva = (novaReserva) => {
     setReservas((listaAtual) => [
       ...listaAtual,
@@ -151,11 +128,7 @@ export default function App() {
     ]);
   };
 
-
-  // =====================================
-  // INTERFACE DO APLICATIVO
-  // =====================================
-
+  // Interface principal do aplicativo:
   return (
     <View style={{ flex: 1 }}>
 
@@ -165,7 +138,7 @@ export default function App() {
       />
 
 
-      {/* TELA DE BOAS-VINDAS */}
+      {/* tela de boas-vindas: */}
 
       {tela === 'splash' && (
         <BoasVindas
@@ -174,7 +147,7 @@ export default function App() {
       )}
 
 
-      {/* TELA DE LOGIN */}
+      {/* tela de login: */}
 
       {tela === 'login' && (
         <LoginScreen
@@ -184,7 +157,7 @@ export default function App() {
       )}
 
 
-      {/* TELA DE CADASTRO */}
+      {/* tela de cadastro: */}
 
       {tela === 'cadastro' && (
         <CadastroScreen
@@ -194,7 +167,7 @@ export default function App() {
       )}
 
 
-      {/* TELA INICIAL */}
+      {/* tela inicial: */}
 
       {tela === 'home' && (
         <HomeScreen
@@ -205,7 +178,7 @@ export default function App() {
       )}
 
 
-      {/* TELA DO MAPA */}
+      {/* tela do mapa: */}
 
       {tela === 'mapa' && (
         <MapaScreen
@@ -215,7 +188,7 @@ export default function App() {
       )}
 
 
-      {/* TELA DE RESERVAS */}
+      {/* tela de reservas: */}
 
       {tela === 'reservar' && (
         <ReservarScreen
@@ -228,7 +201,7 @@ export default function App() {
       )}
 
 
-      {/* HISTÓRICO DE RESERVAS */}
+      {/* histórico de reservas: */}
 
       {tela === 'historico' && (
         <HistoricoScreen
@@ -239,7 +212,7 @@ export default function App() {
       )}
 
 
-      {/* TELA DE AGENDAMENTO */}
+      {/* tela de agendamento: */}
 
       {tela === 'agendamento' && (
         <AgendamentoScreen

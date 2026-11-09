@@ -1,4 +1,3 @@
-
 // Importa o React e as ferramentas para guardar informações na tela.
 import React, { useState } from 'react';
 
