@@ -34,9 +34,10 @@ export default function HomeScreen({
   onExplorar,
   onReservar,
   onPerfil,
-  onAgendamento,
+  onHistorico,
 }) {
   const { width } = useWindowDimensions();
+
   // Define se a tela é grande (como em tablets ou desktops) ou estreita (como em celulares pequenos):
   const telaGrande = width >= 768;
   const celularEstreito = width < 360;
@@ -47,15 +48,18 @@ export default function HomeScreen({
     Poppins_700Bold,
     Poppins_900Black,
   });
+
   // Aguarda o carregamento das fontes:
   if (!fontesCarregadas) {
     // Retorna uma tela vazia enquanto as fontes não são carregadas.
     return <View style={styles.fundo} />;
   }
+
   // Ajusta o tamanho do título e da imagem do mapa de acordo com a tela:
   const tamanhoTitulo = telaGrande ? 29 : celularEstreito ? 22 : 25;
   const tamanhoBoasVindas = telaGrande ? 19 : celularEstreito ? 12 : 14;
   const tamanhoImagemMapa = telaGrande ? 280 : Math.min(width * 0.48, 220);
+
   // Renderiza a tela inicial:
   return (
     // SafeAreaView para evitar sobreposição com a barra de status do Android:
@@ -88,20 +92,6 @@ export default function HomeScreen({
             Boas-vindas ao Parque Vivo!
           </Text>
         </View>
-        
-        <TouchableOpacity
-          onPress={onPerfil}
-          activeOpacity={0.7}
-          style={styles.botaoPerfil}
-          accessibilityRole="button"
-          accessibilityLabel="Abrir perfil do usuário"
-        >
-          <Image
-            source={require('../assets/parque-perfil.png')}
-            style={styles.imagemPerfil}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
       </LinearGradient>
 
       {/* Conteúdo da página: */}
@@ -209,7 +199,7 @@ export default function HomeScreen({
           <Text style={styles.tituloAtalhos}>
             O que vamos fazer?
           </Text>
-                
+
           <View style={styles.areaAtalhos}>
             <TouchableOpacity
               style={styles.atalho}
@@ -249,7 +239,7 @@ export default function HomeScreen({
 
             <TouchableOpacity
               style={styles.atalho}
-              onPress={onAgendamento}
+              onPress={onHistorico}
               activeOpacity={0.7}
               accessibilityRole="button"
             >
@@ -261,7 +251,7 @@ export default function HomeScreen({
                 />
               </View>
               <Text style={styles.textoAtalho}>
-                Agendamento.
+                Histórico de reservas.
               </Text>
             </TouchableOpacity>
           </View>

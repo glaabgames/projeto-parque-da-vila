@@ -162,22 +162,6 @@ export default function ReservarScreen({
             Boas-vindas ao Parque Vivo!
           </Text>
         </View>
-
-        {/* Botão de perfil alinhado à direita: */}
-        <TouchableOpacity
-        // Ajusta o comportamento do botão de perfil, chamando a função onPerfil ao ser pressionado.
-          onPress={onPerfil}
-          activeOpacity={0.7}
-          style={styles.botaoPerfil}
-          accessibilityRole="button"
-          accessibilityLabel="Abrir perfil do usuário"
-        >
-          <Image
-            source={require('../assets/parque-perfil.png')}
-            style={styles.imagemPerfil}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
       </LinearGradient>
 
       {/* Área de rolagem separada do cabeçalho: */}

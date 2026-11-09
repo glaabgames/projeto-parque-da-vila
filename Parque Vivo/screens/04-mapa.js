@@ -29,7 +29,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 
 // Tela do mapa do parque:
-export default function MapaScreen({ onPerfil, onVoltar }) {
+export default function MapaScreen({ onVoltar }) {
   const { width } = useWindowDimensions();
 
   // Guarda os nomes dos locais favoritos:
@@ -165,21 +165,6 @@ export default function MapaScreen({ onPerfil, onVoltar }) {
             Boas-vindas ao Parque Vivo!
           </Text>
         </View>
-
-        {/* Botão que abre o perfil: */}
-        <TouchableOpacity
-          onPress={onPerfil}
-          activeOpacity={0.7}
-          style={styles.botaoPerfil}
-          accessibilityRole="button"
-          accessibilityLabel="Abrir perfil do usuário"
-        >
-          <Image
-            source={require('../assets/parque-perfil.png')}
-            style={styles.imagemPerfil}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
       </LinearGradient>
 
       {/* Área que permite rolar a página: */}

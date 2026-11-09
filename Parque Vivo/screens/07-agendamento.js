@@ -1,3 +1,4 @@
+
 // Importa o React e as ferramentas para guardar informações na tela.
 import React, { useState } from 'react';
 
@@ -26,7 +27,9 @@ export default function AgendamentoScreen({
   // Função para abrir o perfil.
   onPerfil,
   // Função para voltar à tela anterior.
-  onVoltar,              
+  onVoltar,
+  // Função para enviar a nova reserva ao histórico do aplicativo.
+  onReservaConfirmada,
 }) {
   // Descobre a largura da tela para adaptar o visual.
   const { width } = useWindowDimensions();
@@ -136,6 +139,11 @@ export default function AgendamentoScreen({
       horarioFinal: calcularHorarioFinal(horarioSelecionado),
     };
 
+    // Envia a nova reserva para o histórico do aplicativo.
+    if (onReservaConfirmada) {
+      onReservaConfirmada(novaReserva);
+    }
+
     // Adiciona a reserva sem apagar as anteriores.
     setAgendamentos((listaAtual) => [...listaAtual, novaReserva]);
 
@@ -202,21 +210,6 @@ export default function AgendamentoScreen({
             Boas-vindas ao Parque Vivo!
           </Text>
         </View>
-
-        {/* Botão que abre o perfil do usuário: */}
-        <TouchableOpacity
-          onPress={onPerfil}
-          activeOpacity={0.7}
-          style={styles.botaoPerfil}
-          accessibilityRole="button"
-          accessibilityLabel="Abrir perfil do usuário"
-        >
-          <Image
-            source={require('../assets/parque-perfil.png')}
-            style={styles.imagemPerfil}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
       </LinearGradient>
 
       {/* Permite rolar a tela quando o conteúdo não cabe: */}

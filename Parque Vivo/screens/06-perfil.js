@@ -1,1 +1,0 @@
-// Tela de perfil do usuário do aplicativo:
